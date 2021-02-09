@@ -1,0 +1,337 @@
+<?php
+
+namespace App\Controller;
+
+//require_once __DIR__.'/../vendor/autoload.php';
+
+use App\Entity\Card;
+use App\Entity\Journey;
+use App\Entity\Trip;
+use DateTime;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\SerializerInterface;
+
+class JourneyController extends AbstractController
+{
+
+    private $serializer;
+    private $journey;
+    private $cardsStorage;
+
+    public function __construct(SerializerInterface $serializer)
+    {
+        $this->serializer = $serializer;
+        $this->journey = new Journey();
+        $this->cardsStorage = new \SplObjectStorage();
+    }
+
+    /**
+     * @Route("/journey", name="journey", methods={"GET", "POST"})
+     */
+    public function index(Request $request): Response
+    {
+        // Storing given cards into $this->cardsStorage
+        $this->getCardsFromJson($request->getContent());
+
+        $this->cardsArray = $givenCards->getCards()->toArray();
+
+        //var_dump($cardsArray); exit;
+
+        //$this->journey = $this->buildJourney();
+
+        $jsonContent = $this->serializer->serialize(
+            $givenCards->getCards()->first(),
+            'json',
+            ['groups' => ['card', 'trip', 'journey']]
+        );
+
+        $response = new Response();
+        $response->setContent($jsonContent);
+        $response->headers->set('Content-Type', 'application/json');
+        $response->setStatusCode(209);
+        //$response->setStatusCode(Response::HTTP_OK);
+
+        return $response;
+    }
+
+    public function getCardsFromJson($jsonContent): void
+    {
+        $givenCards = $this->serializer->deserialize(
+            $jsonContent,
+            Trip::class,
+            'json'
+        );
+
+        foreach ($givenCards as $card) {
+            $this->cardsStorage->attach($card);
+        }
+    }
+
+    public function buildJourney(): object
+    {
+        while ($this->cardsStorage->count() > 0) {
+            $trip = new Trip();
+
+            $startCard = $this->findStartCard($trip);
+            $this->transferCard($trip, $startCard);
+
+            $this->findNextCards($trip, $startCard);
+        }
+    }
+
+    public function findStartCard(&$trip): object
+    {
+        $store = $this->cardsStorage;
+        $store->rewind();
+
+        while ($store->valid()) {
+            //$index  = $store->key();
+            $card = $store->current();
+            //$data   = $store->getInfo();
+
+            var_dump($object);
+            var_dump($data);
+            $store->next();
+        }
+
+        $trip->addCard($card);
+        $this->cardsStorage->detach($card);
+    }
+
+    // Transferring a card from the given cards list to the trip being build
+    public function transferCard(&$trip, $card): void
+    {
+        $trip->addCard($card);
+        $this->cardsStorage->detach($card);
+    }
+
+    public function findNextCards(&$trip, $card): object
+    {
+
+        if (!$this->getNextCard($card)) {
+            $trip->addCard($card);
+            $this->cardsStorage->detach($card);
+            return $this->findNextCards($trip, $card);
+        }
+
+        return false;
+    }
+
+
+    /**
+     * @Route("/journey2", name="journey2", methods={"GET", "POST"})
+     */
+    public function index2(Request $request): Response
+    {
+        //var_dump(json_decode(file_get_contents("php://input"), true)); exit;
+
+        $givenCards = $this->serializer->deserialize(
+            $request->getContent(),
+            Trip::class,
+            'json'
+        );
+        var_dump($givenCards);
+        exit;
+
+
+        $response = new Response();
+        $response->setContent(json_decode(file_get_contents("php://input"), true));
+        $response->headers->set('Content-Type', 'application/json');
+        $response->setStatusCode(Response::HTTP_OK);
+        return $response;
+
+        print_r(json_decode(file_get_contents("php://input"), true));
+
+
+
+        if (0 === strpos($request->headers->get('Content-Type'), 'application/json')) {
+            $givenCards = $this->serializer->deserialize(
+                $request->getContent(),
+                Trip::class,
+                'json'
+            );
+        } else {
+            $givenCards = null;
+        }
+
+        $trip = new Trip();
+
+        foreach ($givenCards as $card) {
+            $trip->addCard($card);
+        }
+
+        $jsonContent = $this->serializer->serialize(
+            $trip,
+            'json',
+            ['groups' => ['card', 'trip', 'journey']]
+        );
+
+        $response = new Response();
+        $response->setContent($jsonContent);
+        $response->headers->set('Content-Type', 'application/json');
+        $response->setStatusCode(Response::HTTP_OK);
+        return $response;
+
+
+
+
+        $response = new Response("coucou");
+        //return $response;
+
+        $givenCards = $this->serializer->deserialize(
+            $request->getContent(),
+            Trip::class,
+            'json'
+        );
+
+        $response = new Response(json_encode($givenCards));
+        return $response;
+
+        $trip = $this->serializer->serialize(
+            $givenCards,
+            'json',
+            ['groups' => ['card', 'trip', 'journey']]
+        );
+
+        $response = new Response();
+        $response->setContent($trip);
+        $response->headers->set('Content-Type', 'application/json');
+        $response->setStatusCode(201);
+        return $response;
+        //$response->setStatusCode(Response::HTTP_OK);
+
+
+
+
+        /*$givenCards = $this->serializer->deserialize(
+            $request->getContent(),
+            Trip::class,
+            'json'
+        );*/
+        //return new Response($request->getContent());
+        //var_dump($givenCards); exit;
+
+        //return new Response("coucou", 200);
+
+        if (0 === strpos($request->headers->get('Content-Type'), 'application/json')) {
+            $data = json_decode($request->getContent(), true);
+        } else {
+            $data = "PERDU !";
+        }
+
+
+
+        var_dump($jsonContent);
+        exit;
+        var_dump($request->getContent());
+        exit;
+        $jsonContent = json_decode($request->getContent(), true);
+        $givenCards = $this->getCardsFromJson($jsonContent);
+
+        $trip = new Trip();
+
+        foreach ($givenCards as $card) {
+            $trip->addCard($card);
+        }
+
+        //var_dump($trip); exit;
+        $card0 = new Card();
+        $card0->setStartLocation('Beauvais');
+        $card0->setEndLocation('Strasbourg');
+        $card0->setStartDate(new DateTime('now'));
+        $card0->setEndDate(new DateTime('now'));
+        $card0->setSeatNumber('W7-P64');
+        $card0->setMeansType('TGV');
+        $card0->setMeansNumber('AF123');
+
+        $card1 = new Card();
+        $card1->setStartLocation('Nice');
+        $card1->setEndLocation('Paris');
+        $card1->setStartDate(new DateTime('now'));
+        $card1->setEndDate(new DateTime('now'));
+        $card1->setSeatNumber('G6');
+        $card1->setMeansType('plane');
+        $card1->setMeansNumber('AF123');
+
+        $card2 = new Card();
+        $card2->setStartLocation('Paris');
+        $card2->setEndLocation('Beauvais');
+        $card2->setStartDate(new DateTime('now'));
+        $card2->setEndDate(new DateTime('now'));
+        $card2->setMeansType('bus');
+        $card2->setMeansNumber('FL444');
+
+        /*$card2 = new Card(
+            "Paris",
+            "Beauvais",
+            new DateTime('now'), 
+            new DateTime('now'), 
+            "bus ",
+            "FL444"
+        );
+        $card1 = new Card(
+            $startLocation = "Nice",
+            $endLocation = "Paris",
+            $meansType = "plane",
+            $meansNumber = "AF123"
+        );*/
+
+        /*$card2 = new Card(
+            $startLocation = "Paris",
+            $endLocation = "Beauvais",
+            $meansType = "bus",
+            $meansNumber = "FL444"
+        );*/
+
+        /*$trip = new Trip();
+
+        $trip->addCard($card1);
+        $trip->addCard($card2);
+*/
+        $journey = new Journey();
+
+        $journey->addTrip($trip);
+
+        //$jsonContent = $serializer->serialize($journey, 'json');
+
+        $jsonContent = $this->serializer->serialize(
+            $journey,
+            'json',
+            ['groups' => ['card', 'trip', 'journey']]
+        );
+
+
+        /*$newJourney = new Journey();
+        $newJourney = $serializer->deserialize(
+            $jsonContent,
+            Journey::class,
+            'json'
+        );
+
+        $newTrip = $newJourney->getTrips()->first();
+
+        $jsonContent2 = $serializer->serialize(
+            $newTrip,
+            'json',
+            ['groups' => ['card', 'trip', 'journey']]
+        );
+*/
+        //var_dump($card1); exit;
+        $response = new Response();
+        $response->setContent($jsonContent);
+        $response->headers->set('Content-Type', 'application/json');
+        $response->setStatusCode(Response::HTTP_OK);
+
+        return $response;
+
+
+
+        return $this->json([
+            'message' => 'Welcome to your new controller!',
+            'path' => 'src/Controller/JourneyController.php',
+        ]);
+    }
+}
