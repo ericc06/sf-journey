@@ -8,11 +8,10 @@ use App\Entity\Card;
 use App\Entity\Journey;
 use App\Service\JourneyManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Serializer\SerializerInterface;
 
 class JourneyController extends AbstractController
 {
@@ -42,6 +41,7 @@ class JourneyController extends AbstractController
 
         return $response;
     }
+
     /**
      * @Route("/journey-text", name="journey-text", methods={"GET", "POST"})
      */
@@ -52,7 +52,7 @@ class JourneyController extends AbstractController
         $this->journey = $this->manager->buildJourney($this->cardsArray);
 
         //$jsonContent = $this->manager->getSerializedJourney($this->journey);
-        $textContent = $this->manager->getTextualJourney($this->journey);;
+        $textContent = $this->manager->getTextualJourney($this->journey);
 
         $response = new Response($textContent);
 
@@ -107,7 +107,7 @@ class JourneyController extends AbstractController
         $card4->setEndDate(\DateTime::createFromFormat('j-M-Y H:i:s', '15-Feb-2021 20:00:00'));
         $card4->setMeansType('bus');
         $card4->setMeansNumber('BU789');
-        
+
         $card5 = new Card();
         $card5->setStartLocation('Nice');
         $card5->setEndLocation('Paris');

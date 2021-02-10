@@ -5,12 +5,8 @@ namespace App\Service;
 use App\Entity\Card;
 use App\Entity\Journey;
 use App\Entity\Trip;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Serializer\SerializerInterface;
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Criteria;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class JourneyManager
 {
@@ -38,15 +34,15 @@ class JourneyManager
         foreach ($givenCards as $card) {
             $cardsArray[] = $card;
         }
-//var_dump($cardsArray); exit;
+
         return $cardsArray;
     }
 
-    public function buildJourney(Array $cardsArray): Journey
+    public function buildJourney(array $cardsArray): Journey
     {
         $this->cardsArray = $cardsArray;
 
-        $tmp_journey = new Journey;
+        $tmpJourney = new Journey();
 
         while (count($this->cardsArray) > 0) {
             $trip = new Trip();
@@ -54,27 +50,30 @@ class JourneyManager
             $startCard = $this->addStartCardToTrip($trip);
 
             // The starting date of the trips will be used to sort them
-            // chronologocally if there are many. 
+            // chronologocally if there are many.
             $trip->setTripStartDate($startCard->getStartDate());
 
             $this->addNextCardsToTrip($trip, $startCard);
 
-            $tmp_journey->addTrip($trip);
-            //$this->journey->addTrip($trip);
-
-            print_r('TRIP TERMINE. Cartes restantes : ' . count($this->cardsArray) . "<br>\n");
+            $tmpJourney->addTrip($trip);
         }
 
         // If the journey contains many trips, we order them by starting date.
-        if ($tmp_journey->getTrips()->count() > 1) {
-            // ordering the trips collection by tripStartDate property
+        if ($tmpJourney->getTrips()->count() > 1) {
             $criteria = new Criteria();
             $criteria->orderBy(['tripStartDate' => Criteria::ASC]);
 
-            //return $tmp_journey->getTrips()->matching($criteria);
+            $reindexedJourney = $tmpJourney->getTrips()->matching($criteria)->getValues();
+
+            $resultJourney = new Journey();
+            foreach ($reindexedJourney as $trip) {
+                $resultJourney->addTrip($trip);
+            }
+
+            return $resultJourney;
         }
-        
-        return $tmp_journey;
+
+        return $tmpJourney;
     }
 
     public function getSerializedJourney($journey): string
@@ -92,31 +91,31 @@ class JourneyManager
     {
         $trips = $journey->getTrips();
 
-        $text = "Your journey counts " . $trips->count() . " trip" . ($trips->count() > 1 ? "s" : "") . "\n\n";
+        $text = 'Your journey counts '.$trips->count().' trip'.($trips->count() > 1 ? 's.' : '.')."\n\n";
 
-        foreach($trips->getIterator() as $i => $trip) {
+        foreach ($trips->getIterator() as $i => $trip) {
             $cards = $trip->getCards();
 
-            $text .= "Trip n°" . (int)($i + 1) . " counts " . $cards->count() . " travels:\n\n";
+            $text .= 'Trip n°'.(int) ($i + 1).' counts '.$cards->count()." travels:\n\n";
 
-            foreach($cards->getIterator() as $j => $card) {
+            foreach ($cards->getIterator() as $j => $card) {
                 //$text .= "Description of travel n°" . (int)($j + 1) . ":\n";
-            
-                $text .= "- On " . date_format($card->getStartDate(), 'Y-m-d H:i:s');
-                $text .= " take " . $card->getMeansType();
-                $text .= $card->getMeansNumber() ? " " . $card->getMeansNumber() : "";
-                $text .= " from " . $card->getStartLocation();
-                $text .= $card->getMeansStartPoint() ? " (" . $card->getMeansStartPoint() . ")": "";
-                $text .= " to " . $card->getEndLocation();
-                $text .= $card->getMeansEndPoint() ? " (exact location: " . $card->getMeansEndPoint() . ")." : ".";
-                $text .= $card->getSeatNumber() ? " Sit in " . $card->getSeatNumber() . "." : " No seat assignment.";
-                $text .= " Arrival planned on " . date_format($card->getEndDate(), 'Y-m-d H:i:s');
-                $text .= $card->getMeansEndPoint() ? " at " . $card->getMeansEndPoint() . "." : ".";
-                $text .= $card->getBaggageInfo() ? " " . $card->getBaggageInfo() . ".\n\n" : "\n\n";
+
+                $text .= '- On '.date_format($card->getStartDate(), 'Y-m-d H:i:s');
+                $text .= ' take '.$card->getMeansType();
+                $text .= $card->getMeansNumber() ? ' '.$card->getMeansNumber() : '';
+                $text .= ' from '.$card->getStartLocation();
+                $text .= $card->getMeansStartPoint() ? ' ('.$card->getMeansStartPoint().')' : '';
+                $text .= ' to '.$card->getEndLocation();
+                $text .= $card->getMeansEndPoint() ? ' (exact location: '.$card->getMeansEndPoint().').' : '.';
+                $text .= $card->getSeatNumber() ? ' Sit in '.$card->getSeatNumber().'.' : ' No seat assignment.';
+                $text .= ' Arrival planned on '.date_format($card->getEndDate(), 'Y-m-d H:i:s');
+                $text .= $card->getMeansEndPoint() ? ' at '.$card->getMeansEndPoint().'.' : '.';
+                $text .= $card->getBaggageInfo() ? ' '.$card->getBaggageInfo().".\n\n" : "\n\n";
             }
         }
 
-        $text .= "You have arrived at your final destination.";
+        $text .= 'You have arrived at your final destination.';
 
         return $text;
     }
@@ -168,7 +167,7 @@ class JourneyManager
 
     public function addNextCardsToTrip(&$trip, $card): void
     {
-        print_r('START CARD  : ' . $card->getStartLocation() . "<br>\n");
+        print_r('START CARD  : '.$card->getStartLocation()."<br>\n");
         if ($nextCard = $this->getNextCard($card)) {
             $trip->addCard($nextCard);
             $this->unsetValue($this->cardsArray, $nextCard);
@@ -207,7 +206,7 @@ class JourneyManager
             }
         }
         if (null !== $nextCard) {
-            print_r('found next : ' . $nextCard->getStartLocation() . "<br>\n");
+            print_r('found next : '.$nextCard->getStartLocation()."<br>\n");
         }
 
         return $nextCard;

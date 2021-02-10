@@ -25,7 +25,7 @@ class Trip
      * @Groups({"trip"})
      */
     private $tripStartDate;
-    
+
     /**
      * @ORM\OneToMany(targetEntity=Card::class, mappedBy="trip")
      * @Groups({"trip"})
