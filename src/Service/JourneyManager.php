@@ -14,18 +14,19 @@ use Doctrine\Common\Collections\Criteria;
 
 class JourneyManager
 {
-    private $serializer;
-    private $journey;
     private $cardsArray;
+    private $serializer;
 
-    public function __construct(SerializerInterface $serializer)
+    public function __construct($cardsArray = [], SerializerInterface $serializer)
     {
+        $this->cardsArray = $cardsArray;
         $this->serializer = $serializer;
-        $this->journey = new Journey();
-        $this->cardsArray = [];
     }
-    public function setCardsArrayFromJson($jsonContent): void
+
+    public function getCardsArrayFromJson($jsonContent): array
     {
+        $cardsArray = [];
+
         $givenCardsObject = $this->serializer->deserialize(
             $jsonContent,
             Trip::class,
@@ -35,12 +36,16 @@ class JourneyManager
         $givenCards = $givenCardsObject->getCards();
 
         foreach ($givenCards as $card) {
-            $this->cardsArray[] = $card;
+            $cardsArray[] = $card;
         }
+//var_dump($cardsArray); exit;
+        return $cardsArray;
     }
 
-    public function buildJourney(): void
+    public function buildJourney(Array $cardsArray): Journey
     {
+        $this->cardsArray = $cardsArray;
+
         $tmp_journey = new Journey;
 
         while (count($this->cardsArray) > 0) {
@@ -66,21 +71,53 @@ class JourneyManager
             $criteria = new Criteria();
             $criteria->orderBy(['tripStartDate' => Criteria::ASC]);
 
-            $this->journey = $tmp_journey->getTrips()->matching($criteria);
-        } else {
-            $this->journey = $tmp_journey;
+            //return $tmp_journey->getTrips()->matching($criteria);
         }
+        
+        return $tmp_journey;
     }
 
-    public function getSerializedJourney(): string
+    public function getSerializedJourney($journey): string
     {
         $jsonContent = $this->serializer->serialize(
-            $this->journey,
+            $journey,
             'json',
             ['groups' => ['card', 'trip', 'journey']]
         );
 
         return $jsonContent;
+    }
+
+    public function getTextualJourney(Journey $journey): string
+    {
+        $trips = $journey->getTrips();
+
+        //$nbTrips = $trip->count();
+
+        $text = "Your journey counts " . $trips->count() . " trips.\n\n";
+
+        foreach($trips->getIterator() as $i => $trip) {
+            $cards = $trip->getCards();
+
+            $text .= "Trip n°" . (int)($i + 1) . " counts " . $cards->count() . " travels:\n\n";
+
+            foreach($cards->getIterator() as $j => $card) {
+                //$text .= "Description of travel n°" . (int)($j + 1) . ":\n";
+            
+                $text .= "- On " . date_format($card->getStartDate(), 'Y-m-d H:i:s');
+                $text .= " take " . $card->getMeansType() . " " . $card->getMeansNumber();
+                $text .= " from " . $card->getStartLocation();
+                $text .= $card->getMeansStartPoint() ? " (exact location: " . $card->getMeansStartPoint() . ") " : "";
+                $text .= " to " . $card->getEndLocation() . ".";
+                $text .= $card->getMeansEndPoint() ? " (exact location: " . $card->getMeansEndPoint() . ")" : "";
+                $text .= $card->getSeatNumber() ? " Sit in " . $card->getSeatNumber() . "." : " No seat assignment.";
+                $text .= " Arrival planned on " . date_format($card->getEndDate(), 'Y-m-d H:i:s') . " at " . $card->getMeansEndPoint() . "\n\n\n";
+                $text .= $card->getBaggageInfo() ? " " . $card->getBaggageInfo() . "." : "";
+            }
+
+        }
+
+        return $text;
     }
 
     public function addStartCardToTrip(&$trip): Card
