@@ -90,13 +90,16 @@ class JourneyManager
     public function getTextualJourney(Journey $journey): string
     {
         $trips = $journey->getTrips();
+        $nbTrips = $trips->count();
 
-        $text = 'Your journey counts '.$trips->count().' trip'.($trips->count() > 1 ? 's.' : '.')."\n\n";
+        $text = 'Your journey counts '.$nbTrips.' trip'.($nbTrips > 1 ? 's.' : '.')."\n\n";
 
         foreach ($trips->getIterator() as $i => $trip) {
             $cards = $trip->getCards();
+            $nbCards = $cards->count();
 
-            $text .= 'Trip n°'.(int) ($i + 1).' counts '.$cards->count()." travels:\n\n";
+            $text .= 'Trip n°'.(int) ($i + 1).' counts ';
+            $text .= $nbCards.' travel'.($nbCards > 1 ? 's.' : '.')."\n\n";
 
             foreach ($cards->getIterator() as $j => $card) {
                 //$text .= "Description of travel n°" . (int)($j + 1) . ":\n";
@@ -113,9 +116,9 @@ class JourneyManager
                 $text .= $card->getMeansEndPoint() ? ' at '.$card->getMeansEndPoint().'.' : '.';
                 $text .= $card->getBaggageInfo() ? ' '.$card->getBaggageInfo().".\n\n" : "\n\n";
             }
-        }
 
-        $text .= 'You have arrived at your final destination.';
+            $text .= "You have arrived at your final destination.\n";
+        }
 
         return $text;
     }
@@ -167,14 +170,11 @@ class JourneyManager
 
     public function addNextCardsToTrip(&$trip, $card): void
     {
-        print_r('START CARD  : '.$card->getStartLocation()."<br>\n");
         if ($nextCard = $this->getNextCard($card)) {
             $trip->addCard($nextCard);
             $this->unsetValue($this->cardsArray, $nextCard);
             $this->addNextCardsToTrip($trip, $nextCard);
         }
-
-        //return false;
     }
 
     // Provided a card (the startCard), looking for the next card of the trip, with:
@@ -204,9 +204,6 @@ class JourneyManager
                 }
                 break;
             }
-        }
-        if (null !== $nextCard) {
-            print_r('found next : '.$nextCard->getStartLocation()."<br>\n");
         }
 
         return $nextCard;
