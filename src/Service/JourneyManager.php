@@ -92,9 +92,7 @@ class JourneyManager
     {
         $trips = $journey->getTrips();
 
-        //$nbTrips = $trip->count();
-
-        $text = "Your journey counts " . $trips->count() . " trips.\n\n";
+        $text = "Your journey counts " . $trips->count() . " trip" . ($trips->count() > 1 ? "s" : "") . "\n\n";
 
         foreach($trips->getIterator() as $i => $trip) {
             $cards = $trip->getCards();
@@ -105,17 +103,20 @@ class JourneyManager
                 //$text .= "Description of travel n°" . (int)($j + 1) . ":\n";
             
                 $text .= "- On " . date_format($card->getStartDate(), 'Y-m-d H:i:s');
-                $text .= " take " . $card->getMeansType() . " " . $card->getMeansNumber();
+                $text .= " take " . $card->getMeansType();
+                $text .= $card->getMeansNumber() ? " " . $card->getMeansNumber() : "";
                 $text .= " from " . $card->getStartLocation();
-                $text .= $card->getMeansStartPoint() ? " (exact location: " . $card->getMeansStartPoint() . ") " : "";
-                $text .= " to " . $card->getEndLocation() . ".";
-                $text .= $card->getMeansEndPoint() ? " (exact location: " . $card->getMeansEndPoint() . ")" : "";
+                $text .= $card->getMeansStartPoint() ? " (" . $card->getMeansStartPoint() . ")": "";
+                $text .= " to " . $card->getEndLocation();
+                $text .= $card->getMeansEndPoint() ? " (exact location: " . $card->getMeansEndPoint() . ")." : ".";
                 $text .= $card->getSeatNumber() ? " Sit in " . $card->getSeatNumber() . "." : " No seat assignment.";
-                $text .= " Arrival planned on " . date_format($card->getEndDate(), 'Y-m-d H:i:s') . " at " . $card->getMeansEndPoint() . "\n\n\n";
-                $text .= $card->getBaggageInfo() ? " " . $card->getBaggageInfo() . "." : "";
+                $text .= " Arrival planned on " . date_format($card->getEndDate(), 'Y-m-d H:i:s');
+                $text .= $card->getMeansEndPoint() ? " at " . $card->getMeansEndPoint() . "." : ".";
+                $text .= $card->getBaggageInfo() ? " " . $card->getBaggageInfo() . ".\n\n" : "\n\n";
             }
-
         }
+
+        $text .= "You have arrived at your final destination.";
 
         return $text;
     }
