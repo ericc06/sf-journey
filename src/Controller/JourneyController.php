@@ -239,7 +239,7 @@ class JourneyController extends AbstractController
         if ($nextCard = $this->getNextCard($card)) {
             $trip->addCard($nextCard);
             $this->unsetValue($this->cardsArray, $nextCard);
-            $this->findNextCards($trip, $card);
+            $this->findNextCards($trip, $nextCard);
         }
 
         //return false;
@@ -267,7 +267,7 @@ class JourneyController extends AbstractController
                 && $endLoc === $endCard->getStartLocation()
                 && $endDate < $endCard->getStartDate()
             ) {
-                if(! $nextCard) {
+                if (!$nextCard) {
                     $nextCard = $endCard;
                 } else {
                     if ($endCard->getStartDate() < $nextCard->getStartDate()) {
@@ -277,7 +277,7 @@ class JourneyController extends AbstractController
                 break;
             }
         }
-        if($nextCard !== null) {
+        if ($nextCard !== null) {
             print_r("found next : " . $nextCard->getStartLocation() . "<br>\n");
         }
         return $nextCard;
