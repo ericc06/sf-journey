@@ -22,6 +22,7 @@ class Journey
 
     /**
      * @ORM\OneToMany(targetEntity=Trip::class, mappedBy="journey")
+     * @ORM\OrderBy({"startDate" = "ASC"})
      * @Groups({"journey"})
      */
     private $trips;
@@ -37,9 +38,9 @@ class Journey
     }
 
     /**
-     * @return Collection|Trip[]
+     * @return ArrayCollection|Trip[]
      */
-    public function getTrips(): Collection
+    public function getTrips(): ArrayCollection
     {
         return $this->trips;
     }

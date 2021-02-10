@@ -21,6 +21,12 @@ class Trip
     private $id;
 
     /**
+     * @ORM\Column(type="datetime", nullable=true)
+     * @Groups({"trip"})
+     */
+    private $tripStartDate;
+    
+    /**
      * @ORM\OneToMany(targetEntity=Card::class, mappedBy="trip")
      * @Groups({"trip"})
      */
@@ -40,6 +46,18 @@ class Trip
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getTripStartDate(): ?\DateTimeInterface
+    {
+        return $this->tripStartDate;
+    }
+
+    public function setTripStartDate(\DateTimeInterface $tripStartDate): self
+    {
+        $this->tripStartDate = $tripStartDate;
+
+        return $this;
     }
 
     /**
