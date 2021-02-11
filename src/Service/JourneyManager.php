@@ -10,19 +10,21 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 class JourneyManager
 {
-    private $cardsArray;
     private $serializer;
+    private $cardsArray;
 
-    public function __construct($cardsArray = [], SerializerInterface $serializer)
+    public function __construct(SerializerInterface $serializer)
     {
-        $this->cardsArray = $cardsArray;
         $this->serializer = $serializer;
+        $this->cardsArray = [];
     }
 
+    // CAUTION: the JSON given as parameter must be treated like an object of type Trip, not Journey
+    // because this is the Trip entity which holds the Cards collection contained in the JSON object.
     public function getCardsArrayFromJson($jsonContent): array
     {
         $cardsArray = [];
-
+        
         $givenCardsObject = $this->serializer->deserialize(
             $jsonContent,
             Trip::class,
@@ -81,7 +83,12 @@ class JourneyManager
         $jsonContent = $this->serializer->serialize(
             $journey,
             'json',
-            ['groups' => ['card', 'trip', 'journey']]
+            [
+                'groups' => ['card', 'trip', 'journey'],
+                'circular_reference_handler' => function ($object) {
+                    return $object->getId();
+                }
+            ]
         );
 
         return $jsonContent;
@@ -92,32 +99,32 @@ class JourneyManager
         $trips = $journey->getTrips();
         $nbTrips = $trips->count();
 
-        $text = 'Your journey counts '.$nbTrips.' trip'.($nbTrips > 1 ? 's.' : '.')."\n\n";
+        $text = 'Your journey counts ' . $nbTrips . ' trip' . ($nbTrips > 1 ? 's.' : '.') . "\n\n\n";
 
         foreach ($trips->getIterator() as $i => $trip) {
             $cards = $trip->getCards();
             $nbCards = $cards->count();
 
-            $text .= 'Trip n°'.(int) ($i + 1).' counts ';
-            $text .= $nbCards.' travel'.($nbCards > 1 ? 's.' : '.')."\n\n";
+            $text .= 'Trip n°' . (int) ($i + 1) . ' counts ';
+            $text .= $nbCards . ' travel' . ($nbCards > 1 ? 's:' : ':') . "\n\n";
 
             foreach ($cards->getIterator() as $j => $card) {
                 //$text .= "Description of travel n°" . (int)($j + 1) . ":\n";
 
-                $text .= '- On '.date_format($card->getStartDate(), 'Y-m-d H:i:s');
-                $text .= ' take '.$card->getMeansType();
-                $text .= $card->getMeansNumber() ? ' '.$card->getMeansNumber() : '';
-                $text .= ' from '.$card->getStartLocation();
-                $text .= $card->getMeansStartPoint() ? ' ('.$card->getMeansStartPoint().')' : '';
-                $text .= ' to '.$card->getEndLocation();
-                $text .= $card->getMeansEndPoint() ? ' (exact location: '.$card->getMeansEndPoint().').' : '.';
-                $text .= $card->getSeatNumber() ? ' Sit in '.$card->getSeatNumber().'.' : ' No seat assignment.';
-                $text .= ' Arrival planned on '.date_format($card->getEndDate(), 'Y-m-d H:i:s');
-                $text .= $card->getMeansEndPoint() ? ' at '.$card->getMeansEndPoint().'.' : '.';
-                $text .= $card->getBaggageInfo() ? ' '.$card->getBaggageInfo().".\n\n" : "\n\n";
+                $text .= '- On ' . date_format($card->getStartDate(), 'Y-m-d H:i:s');
+                $text .= ' take ' . $card->getMeansType();
+                $text .= $card->getMeansNumber() ? ' ' . $card->getMeansNumber() : '';
+                $text .= ' from ' . $card->getStartLocation();
+                $text .= $card->getMeansStartPoint() ? ' (' . $card->getMeansStartPoint() . ')' : '';
+                $text .= ' to ' . $card->getEndLocation();
+                $text .= $card->getMeansEndPoint() ? ' (exact location: ' . $card->getMeansEndPoint() . ').' : '.';
+                $text .= $card->getSeatNumber() ? ' Sit in ' . $card->getSeatNumber() . '.' : ' No seat assignment.';
+                $text .= ' Arrival planned on ' . date_format($card->getEndDate(), 'Y-m-d H:i:s');
+                $text .= $card->getMeansEndPoint() ? ' at ' . $card->getMeansEndPoint() . '.' : '.';
+                $text .= $card->getBaggageInfo() ? ' ' . $card->getBaggageInfo() . ".\n\n" : "\n\n";
             }
 
-            $text .= "You have arrived at your final destination.\n";
+            $text .= "You have arrived at your final destination.\n\n\n";
         }
 
         return $text;
@@ -207,5 +214,10 @@ class JourneyManager
         }
 
         return $nextCard;
+    }
+
+    // Useful to unit test some of the above methods
+    public function setThisCardsArray(array $cardsArray): void{
+        $this->cardsArray = $cardsArray;
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use App\Repository\TripRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -53,7 +52,7 @@ class Trip
         return $this->tripStartDate;
     }
 
-    public function setTripStartDate(\DateTimeInterface $tripStartDate): self
+    public function setTripStartDate(?\DateTimeInterface $tripStartDate): self
     {
         $this->tripStartDate = $tripStartDate;
 
