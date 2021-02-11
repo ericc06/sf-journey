@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
@@ -19,7 +20,7 @@ class Journey
     private $id;
 
     /**
-     * @ORM\OneToMany(targetEntity=Trip::class, mappedBy="journey")
+     * @ORM\OneToMany(targetEntity=Trip::class, mappedBy="journey", cascade={"persist", "remove"})
      * @ORM\OrderBy({"startDate" = "ASC"})
      * @Groups({"journey"})
      */
@@ -36,9 +37,9 @@ class Journey
     }
 
     /**
-     * @return ArrayCollection|Trip[]
+     * @return Collection|Trip[]
      */
-    public function getTrips(): ArrayCollection
+    public function getTrips(): Collection
     {
         return $this->trips;
     }

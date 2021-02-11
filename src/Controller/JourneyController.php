@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Doctrine\ORM\EntityManagerInterface;
 
 class JourneyController extends AbstractController
 {
@@ -28,7 +29,7 @@ class JourneyController extends AbstractController
      */
     public function index(Request $request): Response
     {
-        $this->initProperties($request);
+        $this->createJourney($request);
 
         $jsonContent = $this->manager->getSerializedJourney($this->journey);
 
@@ -42,7 +43,7 @@ class JourneyController extends AbstractController
      */
     public function indexTest(Request $request): Response
     {
-        $this->initProperties($request);
+        $this->createJourney($request);
 
         $textContent = $this->manager->getTextualJourney($this->journey);
 
@@ -51,10 +52,16 @@ class JourneyController extends AbstractController
         return $response;
     }
 
-    public function initProperties($request): void
+    public function createJourney($request): void
     {
         $this->cardsArray = $this->manager->getCardsArrayFromJson($request->getContent());
 
         $this->journey = $this->manager->buildJourney($this->cardsArray);
+
+        $entityManager = $this->getDoctrine()->getManager();
+
+        $entityManager->persist($this->journey);
+
+        $entityManager->flush();
     }
 }

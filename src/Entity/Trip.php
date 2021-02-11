@@ -26,7 +26,7 @@ class Trip
     private $tripStartDate;
 
     /**
-     * @ORM\OneToMany(targetEntity=Card::class, mappedBy="trip")
+     * @ORM\OneToMany(targetEntity=Card::class, mappedBy="trip", cascade={"persist", "remove"})
      * @Groups({"trip"})
      */
     private $cards;
