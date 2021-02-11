@@ -224,16 +224,16 @@ class Card
     {
         $arrayCard = [
             //"id" => $this->getId(),
-            "startLocation" => $this->getStartLocation(),
-            "endLocation" => $this->getEndLocation(),
-            "startDate" => "2021-03-16T20:00:00+00:00",
-            "endDate" => "2021-03-16T20:00:00+00:00",
-            "seatNumber" => $this->getSeatNumber(),
-            "meansType" => $this->getMeansType(),
-            "meansNumber" => $this->getMeansNumber(),
-            "meansStartPoint" => $this->getMeansStartPoint(),
-            "meansEndPoint" => $this->getMeansEndPoint(),
-            "baggageInfo" => $this->getBaggageInfo(),
+            'startLocation' => $this->getStartLocation(),
+            'endLocation' => $this->getEndLocation(),
+            'startDate' => '2021-03-16T20:00:00+00:00',
+            'endDate' => '2021-03-16T20:00:00+00:00',
+            'seatNumber' => $this->getSeatNumber(),
+            'meansType' => $this->getMeansType(),
+            'meansNumber' => $this->getMeansNumber(),
+            'meansStartPoint' => $this->getMeansStartPoint(),
+            'meansEndPoint' => $this->getMeansEndPoint(),
+            'baggageInfo' => $this->getBaggageInfo(),
             //"trip" => $this->getTrip(),
         ];
 
