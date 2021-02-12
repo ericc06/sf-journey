@@ -56,8 +56,7 @@ class JourneyController extends AbstractController
         $this->cardsArray = $this->manager->getCardsArrayFromJson($request->getContent());
         $this->journey = $this->manager->getBuiltJourney($this->cardsArray);
 
-        $entityManager = $this->getDoctrine()->getManager();
-        $entityManager->persist($this->journey);
-        $entityManager->flush();
+        // Saving the journey to DB and getting the journey with the INSERT id
+        $this->journey = $this->manager->persistJourney($this->journey);
     }
 }

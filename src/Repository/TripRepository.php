@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Trip;
+use App\Entity\Card;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -19,32 +20,24 @@ class TripRepository extends ServiceEntityRepository
         parent::__construct($registry, Trip::class);
     }
 
-    // /**
-    //  * @return Trip[] Returns an array of Trip objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    public function findByTripStartDateAfterGivenDate($date)
     {
         return $this->createQueryBuilder('t')
-            ->andWhere('t.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('t.id', 'ASC')
-            ->setMaxResults(10)
+            ->andWhere('t.tripStartDate > :date')
+            ->setParameter('date', $date)
+            ->orderBy('t.tripStartDate', 'ASC')
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
     }
-    */
 
-    /*
-    public function findOneBySomeField($value): ?Trip
+    public function findImmediateNextTripStartingAfterNow()
     {
         return $this->createQueryBuilder('t')
-            ->andWhere('t.exampleField = :val')
-            ->setParameter('val', $value)
+            ->andWhere('t.tripStartDate > :now')
+            ->setParameter('now', new \DateTime())
+            ->orderBy('t.tripStartDate', 'ASC')
+            ->setMaxResults(1)
             ->getQuery()
-            ->getOneOrNullResult()
-        ;
+            ->getOneOrNullResult();
     }
-    */
 }

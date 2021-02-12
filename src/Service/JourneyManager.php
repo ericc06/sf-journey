@@ -6,17 +6,20 @@ use App\Entity\Card;
 use App\Entity\Journey;
 use App\Entity\Trip;
 use Doctrine\Common\Collections\Criteria;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 
 class JourneyManager
 {
     private $serializer;
     private $cardsArray;
+    private $em;
 
-    public function __construct(SerializerInterface $serializer)
+    public function __construct(SerializerInterface $serializer, EntityManagerInterface  $em)
     {
         $this->serializer = $serializer;
         $this->cardsArray = [];
+        $this->em = $em;
     }
 
     // The JSON given as parameter must be treated like an object of type Trip, not Journey
@@ -139,7 +142,7 @@ class JourneyManager
             $startLoc = $card->getStartLocation();
             $startDate = $card->getStartDate();
             // Boolean used to know the exit condition of the following 'foreach' loop.
-            $isItStartCard = true;
+            $isStartCard = true;
             // Looking for a card with an end location equal to the current card starting location
             // AND with an end date older that the current card start date.
             // If we find one, the current card is not the starting cart, so we break the loop
@@ -150,13 +153,13 @@ class JourneyManager
                     && $startLoc === $endCard->getEndLocation()
                     && $startDate > $endCard->getEndDate()
                 ) {
-                    $isItStartCard = false;
+                    $isStartCard = false;
                     break;
                 }
             }
 
             // We found the (or one of the) starting card. We break the main loop.
-            if ($isItStartCard) {
+            if ($isStartCard) {
                 $startCard = $card;
                 break;
             }
@@ -214,6 +217,14 @@ class JourneyManager
         }
 
         return $nextCard;
+    }
+
+    public function persistJourney(Journey $journey): Journey
+    {
+        $this->em->persist($journey);
+        $this->em->flush();
+
+        return $journey;
     }
 
     // Useful to unit test some of the above methods

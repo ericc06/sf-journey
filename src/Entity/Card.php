@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Repository\CardRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
@@ -78,7 +79,7 @@ class Card
     private $baggageInfo;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Trip::class, inversedBy="cards")
+     * @ORM\ManyToOne(targetEntity=Trip::class, inversedBy="cards", fetch="LAZY")
      * @Groups({"trip_link"})
      */
     private $trip;

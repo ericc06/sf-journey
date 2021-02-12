@@ -19,32 +19,20 @@ class JourneyRepository extends ServiceEntityRepository
         parent::__construct($registry, Journey::class);
     }
 
-    // /**
-    //  * @return Journey[] Returns an array of Journey objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    public function findAllHavingMoreThanGivenNumberOfTrips(int $nbTrips): array
     {
-        return $this->createQueryBuilder('j')
-            ->andWhere('j.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('j.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
+        $conn = $this->getEntityManager()->getConnection();
 
-    /*
-    public function findOneBySomeField($value): ?Journey
-    {
-        return $this->createQueryBuilder('j')
-            ->andWhere('j.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        $sql = '
+            SELECT j.id, COUNT(t.id) as count FROM journey j 
+            LEFT JOIN trip as t ON t.journey_id = j.id
+            GROUP BY j.id
+            HAVING count >= :nb
+            ORDER BY count DESC
+            ';
+        $stmt = $conn->prepare($sql);
+        $stmt->execute(['nb' => $nbTrips]);
+
+        return $stmt->fetchAllAssociative();
     }
-    */
 }

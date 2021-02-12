@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Repository\TripRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -32,7 +33,7 @@ class Trip
     private $cards;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Journey::class, inversedBy="trips")
+     * @ORM\ManyToOne(targetEntity=Journey::class, inversedBy="trips", fetch="LAZY")
      * @Groups({"journey_link"})
      */
     private $journey;
