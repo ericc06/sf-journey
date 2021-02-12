@@ -54,7 +54,7 @@ class JourneyController extends AbstractController
     public function createJourney($request): void
     {
         $this->cardsArray = $this->manager->getCardsArrayFromJson($request->getContent());
-        $this->journey = $this->manager->buildJourney($this->cardsArray);
+        $this->journey = $this->manager->getBuiltJourney($this->cardsArray);
 
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($this->journey);

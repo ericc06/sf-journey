@@ -40,7 +40,7 @@ class JourneyManager
         return $cardsArray;
     }
 
-    public function buildJourney(array $cardsArray): Journey
+    public function getBuiltJourney(array $cardsArray): Journey
     {
         $this->cardsArray = $cardsArray;
 
@@ -187,7 +187,7 @@ class JourneyManager
     // Provided a card (the startCard), looking for the next card of the trip, with:
     // - start location of the next card = end location of the startCart
     // - start date of the next card > end date of the startCart
-    // If there are many, we chose the first one (chronologically).
+    // If there are many, we choose the first one (chronologically).
     public function getNextCard($startCard): ?Card
     {
         $cards = $this->cardsArray;
