@@ -9,7 +9,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Doctrine\ORM\EntityManagerInterface;
 
 class JourneyController extends AbstractController
 {
@@ -55,13 +54,10 @@ class JourneyController extends AbstractController
     public function createJourney($request): void
     {
         $this->cardsArray = $this->manager->getCardsArrayFromJson($request->getContent());
-
         $this->journey = $this->manager->buildJourney($this->cardsArray);
 
         $entityManager = $this->getDoctrine()->getManager();
-
         $entityManager->persist($this->journey);
-
         $entityManager->flush();
     }
 }
