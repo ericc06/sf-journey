@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\Journey;
+use App\Entity\Trip;
+use App\Entity\Card;
 use App\Service\JourneyManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,6 +23,33 @@ class JourneyController extends AbstractController
         $this->manager = $journeyManager;
         $this->journey = new Journey();
         $this->cardsArray = [];
+    }
+
+    /**
+     * @Route("/repotest", name="repotest", methods={"GET"})
+     */
+    public function test(): Response
+    {
+        $cards = $this->getDoctrine()
+            ->getRepository(Card::class)
+            ->findAllLongerThanGivenHours(40);
+
+        dump($cards);
+
+        /*$trips = $this->getDoctrine()
+            ->getRepository(Trip::class)
+            ->findImmediateNextTripStartingAfterNow();
+            //->findByTripStartDateAfterGivenDate("2021-02-15T22:00:00+00:00");
+
+        dump($trips);*/
+
+        /*$journeys = $this->getDoctrine()
+            ->getRepository(Journey::class)
+            ->findAllHavingMoreThanGivenNumberOfTrips(2);
+
+        dump($journeys);*/
+
+        exit;
     }
 
     /**

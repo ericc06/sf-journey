@@ -33,8 +33,7 @@ class TripRepository extends ServiceEntityRepository
     public function findImmediateNextTripStartingAfterNow()
     {
         return $this->createQueryBuilder('t')
-            ->andWhere('t.tripStartDate > :now')
-            ->setParameter('now', new \DateTime())
+            ->andWhere('t.tripStartDate > CURRENT_DATE()')
             ->orderBy('t.tripStartDate', 'ASC')
             ->setMaxResults(1)
             ->getQuery()

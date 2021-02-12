@@ -27,7 +27,6 @@ class CardRepository extends ServiceEntityRepository
             ->orderBy('c.startDate', 'ASC')
             ->getQuery()
             ->getResult();
-
     }
 
     public function findByStartDateAfterGivenDate($date)
@@ -49,22 +48,5 @@ class CardRepository extends ServiceEntityRepository
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
-    }
-
-    public function findAllLongerThanGivenHours(int $hours, bool $includeExpiredCards = true): array
-    {
-        $qb = $this->createQueryBuilder('c')
-            ->where('TIMEDIFF(c.endDate, c.startDate) > :hours')
-            ->setParameter('hours', $hours)
-            ->orderBy('c.startDate', 'ASC');
-
-        if (!$includeExpiredCards) {
-            $qb->andWhere('c.startDate >= :now')
-                ->setParameter('now', new \DateTime());
-        }
-
-        $query = $qb->getQuery();
-
-        return $query->execute();
     }
 }
