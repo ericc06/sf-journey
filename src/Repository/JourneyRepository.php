@@ -19,7 +19,7 @@ class JourneyRepository extends ServiceEntityRepository
         parent::__construct($registry, Journey::class);
     }
 
-    public function findAllHavingMoreThanGivenNumberOfTrips(int $nbTrips): array
+    public function findAllHavingAtLeastGivenNumberOfTrips(int $nbTrips): array
     {
         $conn = $this->getEntityManager()->getConnection();
 

@@ -49,4 +49,25 @@ class CardRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    public function findAllLongerThanGivenHours(int $hours, bool $includeExpiredCards = true): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = '
+            SELECT * FROM card c
+            WHERE TIMESTAMPDIFF(MINUTE, c.start_date, c.end_date) > :minutes
+            ';
+
+        if (!$includeExpiredCards) {
+            $sql .= 'AND c.start_date > CURRENT_TIME()';
+        }            
+
+        $sql .= 'ORDER BY c.start_date ASC';
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute(['minutes' => $hours * 60]);
+
+        return $stmt->fetchAllAssociative();
+    }
 }
