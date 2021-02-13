@@ -30,13 +30,15 @@ class JourneyController extends AbstractController
      */
     public function indexJson(Request $request): Response
     {
-        $this->createJourney($request);
+        if (strlen($request->getContent()) === 0) {
+            return new JsonResponse(['warning' => 'No content received.'], 200);
+        }
+        
+        $this->createJourney($request->getContent());
 
         $jsonContent = $this->manager->getSerializedJourney($this->journey);
 
-        $response = JsonResponse::fromJsonString($jsonContent);
-
-        return $response;
+        return JsonResponse::fromJsonString($jsonContent);
     }
 
     /**
@@ -44,18 +46,20 @@ class JourneyController extends AbstractController
      */
     public function indexText(Request $request): Response
     {
-        $this->createJourney($request);
+        if (strlen($request->getContent()) === 0) {
+            return new Response('No content received.', 200);
+        }
+
+        $this->createJourney($request->getContent());
 
         $textContent = $this->manager->getTextualJourney($this->journey);
 
-        $response = new Response($textContent);
-
-        return $response;
+        return new Response($textContent);
     }
 
-    public function createJourney($request): void
+    public function createJourney($requestContent): void
     {
-        $this->cardsArray = $this->manager->getCardsArrayFromJson($request->getContent());
+        $this->cardsArray = $this->manager->getCardsArrayFromJson($requestContent);
         $this->journey = $this->manager->getBuiltJourney($this->cardsArray);
 
         // Saving the journey to DB and getting the journey with the INSERT id
