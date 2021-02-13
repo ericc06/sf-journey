@@ -26,36 +26,9 @@ class JourneyController extends AbstractController
     }
 
     /**
-     * @Route("/repotest", name="repotest", methods={"GET"})
+     * @Route("/journey/get-json", name="journey-json", methods={"POST"})
      */
-    public function test(): Response
-    {
-        $cards = $this->getDoctrine()
-            ->getRepository(Card::class)
-            ->findAllLongerThanGivenHours(40);
-
-        dump($cards);
-
-        /*$trips = $this->getDoctrine()
-            ->getRepository(Trip::class)
-            ->findImmediateNextTripStartingAfterNow();
-            //->findByTripStartDateAfterGivenDate("2021-02-15T22:00:00+00:00");
-
-        dump($trips);*/
-
-        /*$journeys = $this->getDoctrine()
-            ->getRepository(Journey::class)
-            ->findAllHavingMoreThanGivenNumberOfTrips(2);
-
-        dump($journeys);*/
-
-        exit;
-    }
-
-    /**
-     * @Route("/journey", name="journey", methods={"POST"})
-     */
-    public function index(Request $request): Response
+    public function indexJson(Request $request): Response
     {
         $this->createJourney($request);
 
@@ -67,9 +40,9 @@ class JourneyController extends AbstractController
     }
 
     /**
-     * @Route("/journey-text", name="journey-text", methods={"POST"})
+     * @Route("/journey/get-text", name="journey-text", methods={"POST"})
      */
-    public function indexTest(Request $request): Response
+    public function indexText(Request $request): Response
     {
         $this->createJourney($request);
 
