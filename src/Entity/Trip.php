@@ -27,10 +27,10 @@ class Trip
     private $tripStartDate;
 
     /**
-     * @ORM\OneToMany(targetEntity=Card::class, mappedBy="trip", cascade={"persist", "remove"})
+     * @ORM\OneToMany(targetEntity=Ride::class, mappedBy="Trip", cascade={"persist", "remove"})
      * @Groups({"trip"})
      */
-    private $cards;
+    private $rides;
 
     /**
      * @ORM\ManyToOne(targetEntity=Journey::class, inversedBy="trips", fetch="LAZY")
@@ -38,9 +38,10 @@ class Trip
      */
     private $journey;
 
+
     public function __construct()
     {
-        $this->cards = new ArrayCollection();
+        $this->rides = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -61,29 +62,29 @@ class Trip
     }
 
     /**
-     * @return Collection|Card[]
+     * @return Collection|Ride[]
      */
-    public function getCards(): Collection
+    public function getRides(): Collection
     {
-        return $this->cards;
+        return $this->rides;
     }
 
-    public function addCard(Card $card): self
+    public function addRide(Ride $ride): self
     {
-        if (!$this->cards->contains($card)) {
-            $this->cards[] = $card;
-            $card->setTrip($this);
+        if (!$this->rides->contains($ride)) {
+            $this->rides[] = $ride;
+            $ride->setTrip($this);
         }
 
         return $this;
     }
 
-    public function removeCard(Card $card): self
+    public function removeRide(Ride $ride): self
     {
-        if ($this->cards->removeElement($card)) {
+        if ($this->rides->removeElement($ride)) {
             // set the owning side to null (unless already changed)
-            if ($card->getTrip() === $this) {
-                $card->setTrip(null);
+            if ($ride->getTrip() === $this) {
+                $ride->setTrip(null);
             }
         }
 

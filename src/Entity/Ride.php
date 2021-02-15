@@ -2,87 +2,75 @@
 
 namespace App\Entity;
 
-use App\Repository\CardRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-/**
- * @ORM\Entity(repositoryClass=CardRepository::class)
+/** 
+ * @ORM\MappedSuperclass
+ * @ORM\DiscriminatorColumn(name="meansType", type="string")
+ * @ORM\DiscriminatorMap({
+ * "train"="App\Entity\TrainRide",
+ * "flight"="App\Entity\FlightRide",
+ * "bus"="App\Entity\BusRide"
+ * })
  */
-class Card
+abstract class Ride
 {
     /**
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      */
-    private $id;
+    protected $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"card"})
+     * @Groups({"ride"})
      */
-    private $startLocation;
+    protected $startLocation;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"card"})
+     * @Groups({"ride"})
      */
-    private $endLocation;
+    protected $endLocation;
 
     /**
      * @ORM\Column(type="datetime")
-     * @Groups({"card"})
+     * @Groups({"ride"})
      */
-    private $startDate;
+    protected $startDate;
 
     /**
-     * @ORM\Column(type="datetime")
-     * @Groups({"card"})
+     * @ORM\Column(type="datetime", nullable=true)
+     * @Groups({"ride"})
      */
-    private $endDate;
-
-    /**
-     * @ORM\Column(type="string", length=20, nullable=true)
-     * @Groups({"card"})
-     */
-    private $seatNumber;
+    protected $endDate;
 
     /**
      * @ORM\Column(type="string", length=50)
-     * @Groups({"card"})
+     * @Groups({"ride"})
      */
-    private $meansType;
-
-    /**
-     * @ORM\Column(type="string", length=20, nullable=true)
-     * @Groups({"card"})
-     */
-    private $meansNumber;
+    protected $meansType;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Groups({"card"})
+     * @Groups({"ride"})
      */
-    private $meansStartPoint;
+    protected $meansStartPoint;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     * @Groups({"card"})
+     * @ORM\Column(type="string", length=50, nullable=true)
+     * @Groups({"ride"})
      */
-    private $meansEndPoint;
+    protected $meansEndPoint;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     * @Groups({"card"})
-     */
-    private $baggageInfo;
-
-    /**
-     * @ORM\ManyToOne(targetEntity=Trip::class, inversedBy="cards", fetch="LAZY")
+     * @ORM\ManyToOne(targetEntity=Trip::class, inversedBy="rides", fetch="LAZY")
+     * @ORM\JoinColumn(name="trip_id", referencedColumnName="id")
      * @Groups({"trip_link"})
      */
-    private $trip;
+    protected $trip;
 
     public function getId(): ?int
     {
@@ -130,21 +118,9 @@ class Card
         return $this->endDate;
     }
 
-    public function setEndDate(\DateTimeInterface $endDate): self
+    public function setEndDate(?\DateTimeInterface $endDate): self
     {
         $this->endDate = $endDate;
-
-        return $this;
-    }
-
-    public function getSeatNumber(): ?string
-    {
-        return $this->seatNumber;
-    }
-
-    public function setSeatNumber(?string $seatNumber): self
-    {
-        $this->seatNumber = $seatNumber;
 
         return $this;
     }
@@ -157,18 +133,6 @@ class Card
     public function setMeansType(string $meansType): self
     {
         $this->meansType = $meansType;
-
-        return $this;
-    }
-
-    public function getMeansNumber(): ?string
-    {
-        return $this->meansNumber;
-    }
-
-    public function setMeansNumber(?string $meansNumber): self
-    {
-        $this->meansNumber = $meansNumber;
 
         return $this;
     }
@@ -197,18 +161,6 @@ class Card
         return $this;
     }
 
-    public function getBaggageInfo(): ?string
-    {
-        return $this->baggageInfo;
-    }
-
-    public function setBaggageInfo(?string $baggageInfo): self
-    {
-        $this->baggageInfo = $baggageInfo;
-
-        return $this;
-    }
-
     public function getTrip(): ?Trip
     {
         return $this->trip;
@@ -220,24 +172,24 @@ class Card
 
         return $this;
     }
-
+    
     public function toArray(): array
     {
-        $arrayCard = [
+        $arrayRide = [
             //"id" => $this->getId(),
             'startLocation' => $this->getStartLocation(),
             'endLocation' => $this->getEndLocation(),
             'startDate' => '2021-03-16T20:00:00+00:00',
             'endDate' => '2021-03-16T20:00:00+00:00',
-            'seatNumber' => $this->getSeatNumber(),
+            //'seatNumber' => $this->getSeatNumber(),
             'meansType' => $this->getMeansType(),
-            'meansNumber' => $this->getMeansNumber(),
+            //'meansNumber' => $this->getMeansNumber(),
             'meansStartPoint' => $this->getMeansStartPoint(),
             'meansEndPoint' => $this->getMeansEndPoint(),
-            'baggageInfo' => $this->getBaggageInfo(),
+            //'baggageInfo' => $this->getBaggageInfo(),
             //"trip" => $this->getTrip(),
         ];
 
-        return $arrayCard;
+        return $arrayRide;
     }
 }

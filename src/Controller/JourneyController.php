@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Journey;
 use App\Entity\Trip;
-use App\Entity\Card;
+use App\Entity\Ride;
 use App\Service\JourneyManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -14,15 +14,15 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class JourneyController extends AbstractController
 {
-    private $manager;
+    private $journeyManager;
     private $journey;
-    private $cardsArray;
+    private $ridesArray;
 
     public function __construct(JourneyManager $journeyManager)
     {
-        $this->manager = $journeyManager;
+        $this->journeyManager = $journeyManager;
         $this->journey = new Journey();
-        $this->cardsArray = [];
+        $this->ridesArray = [];
     }
 
     /**
@@ -32,7 +32,7 @@ class JourneyController extends AbstractController
     {
         $this->createJourney($request);
 
-        $jsonContent = $this->manager->getSerializedJourney($this->journey);
+        $jsonContent = $this->journeyManager->getSerializedJourney($this->journey);
 
         $response = JsonResponse::fromJsonString($jsonContent);
 
@@ -46,7 +46,7 @@ class JourneyController extends AbstractController
     {
         $this->createJourney($request);
 
-        $textContent = $this->manager->getTextualJourney($this->journey);
+        $textContent = $this->journeyManager->getTextualJourney($this->journey);
 
         $response = new Response($textContent);
 
@@ -55,10 +55,11 @@ class JourneyController extends AbstractController
 
     public function createJourney($request): void
     {
-        $this->cardsArray = $this->manager->getCardsArrayFromJson($request->getContent());
-        $this->journey = $this->manager->getBuiltJourney($this->cardsArray);
+        $this->ridesArray = $this->journeyManager->getRidesArrayFromJson($request->getContent());
+
+        $this->journey = $this->journeyManager->getBuiltJourney($this->ridesArray);
 
         // Saving the journey to DB and getting the journey with the INSERT id
-        $this->journey = $this->manager->persistJourney($this->journey);
+        $this->journey = $this->journeyManager->persistJourney($this->journey);
     }
 }

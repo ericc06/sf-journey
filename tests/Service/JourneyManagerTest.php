@@ -3,7 +3,7 @@
 namespace App\Tests\Service;
 
 use App\Service\JourneyManager;
-use App\Entity\Card;
+use App\Entity\Ride;
 use App\Entity\Trip;
 use App\Entity\Journey;
 use PHPUnit\Framework\TestCase;
@@ -29,13 +29,13 @@ class JourneyManagerTest extends TestCase
 
     public function testBuildJourney()
     {
-        $cardsArray = $this->getCardsArray();
+        $ridesArray = $this->getRidesArray();
 
-        $journey = $this->journeyManager->buildJourney($cardsArray);
+        $journey = $this->journeyManager->buildJourney($ridesArray);
 
         $this->assertInstanceOf(Journey::class, $journey);
         $this->assertObjectHasAttribute('trips', $journey);
-        $this->assertObjectHasAttribute('cards', $journey->getTrips()->first());
+        $this->assertObjectHasAttribute('rides', $journey->getTrips()->first());
     }
 
     public function testGetSerializedJourney()
@@ -59,21 +59,21 @@ class JourneyManagerTest extends TestCase
         $this->assertStringContainsString('You have arrived at your final destination.', $text);
     }
 
-    public function testAddStartCardToTrip()
+    public function testAddStartRideToTrip()
     {
         $trip = $this->getInitialTrip();
-        $this->assertEquals(3, $trip->getCards()->count());
+        $this->assertEquals(3, $trip->getRides()->count());
 
-        $cardsArray = $this->getCardsArray();
-        $this->journeyManager->setThisCardsArray($cardsArray);
+        $ridesArray = $this->getRidesArray();
+        $this->journeyManager->setThisRidesArray($ridesArray);
 
-        $startCard = $this->journeyManager->addStartCardToTrip($trip);
+        $startRide = $this->journeyManager->addStartRideToTrip($trip);
 
-        $this->assertStringContainsString('Nice', $startCard->getStartLocation());
-        $this->assertEquals(4, $trip->getCards()->count());
+        $this->assertStringContainsString('Nice', $startRide->getStartLocation());
+        $this->assertEquals(4, $trip->getRides()->count());
     }
 
-    /*public function testGetCardsArrayFromJson()
+    /*public function testGetRidesArrayFromJson()
     {
         $this->initProperties();
 
@@ -81,9 +81,9 @@ class JourneyManagerTest extends TestCase
 
         $jsonContent = $this->getInitialJson();
 
-        $cardsArray = $this->journeyManager->getCardsArrayFromJson($jsonContent);
+        $ridesArray = $this->journeyManager->getRidesArrayFromJson($jsonContent);
 
-        $this->assertEquals(2, count($cardsArray));
+        $this->assertEquals(2, count($ridesArray));
     }*/
 
     public function getTestJourney(): Journey
@@ -98,63 +98,63 @@ class JourneyManagerTest extends TestCase
 
     public function getInitialTrip(): Trip
     {
-        $cardsArray = $this->getCardsArray();
+        $ridesArray = $this->getRidesArray();
 
         $trip = new Trip();
-        $trip->addCard($cardsArray[0]);
-        $trip->addCard($cardsArray[1]);
-        $trip->addCard($cardsArray[2]);
+        $trip->addRide($ridesArray[0]);
+        $trip->addRide($ridesArray[1]);
+        $trip->addRide($ridesArray[2]);
 
         return $trip;
     }
 
-    public function getCardsArray(): array
+    public function getRidesArray(): array
     {
-        $card1 = new Card();
-        $card1->setStartLocation('Paris');
-        $card1->setEndLocation('Strasbourg');
-        $card1->setStartDate(new \DateTime());
-        $card1->setEndDate(new \DateTime());
-        $card1->setSeatNumber('wagon 7, seat P64');
-        $card1->setMeansType('TGV');
-        $card1->setMeansNumber('425');
+        $ride1 = new Ride();
+        $ride1->setStartLocation('Paris');
+        $ride1->setEndLocation('Strasbourg');
+        $ride1->setStartDate(new \DateTime());
+        $ride1->setEndDate(new \DateTime());
+        $ride1->setSeatNumber('wagon 7, seat P64');
+        $ride1->setMeansType('TGV');
+        $ride1->setMeansNumber('425');
 
-        $card2 = new Card();
-        $card2->setStartLocation('Nice');
-        $card2->setEndLocation('Paris');
-        $card2->setStartDate(new \DateTime('now -1 day'));
-        $card2->setEndDate(new \DateTime('now -1 day'));
-        $card2->setSeatNumber('4F');
-        $card2->setMeansType('flight');
-        $card2->setMeansNumber('AF123');
+        $ride2 = new Ride();
+        $ride2->setStartLocation('Nice');
+        $ride2->setEndLocation('Paris');
+        $ride2->setStartDate(new \DateTime('now -1 day'));
+        $ride2->setEndDate(new \DateTime('now -1 day'));
+        $ride2->setSeatNumber('4F');
+        $ride2->setMeansType('flight');
+        $ride2->setMeansNumber('AF123');
 
-        $card3 = new Card();
-        $card3->setStartLocation('Strasbourg');
-        $card3->setEndLocation('Nantes');
-        $card3->setStartDate(new \DateTime('now +1 day'));
-        $card3->setEndDate(new \DateTime('now +1 day'));
-        $card3->setSeatNumber('8C');
-        $card3->setMeansType('flight');
-        $card3->setMeansNumber('EJ987');
+        $ride3 = new Ride();
+        $ride3->setStartLocation('Strasbourg');
+        $ride3->setEndLocation('Nantes');
+        $ride3->setStartDate(new \DateTime('now +1 day'));
+        $ride3->setEndDate(new \DateTime('now +1 day'));
+        $ride3->setSeatNumber('8C');
+        $ride3->setMeansType('flight');
+        $ride3->setMeansNumber('EJ987');
 
-        $cardsArray = [];
-        $cardsArray[] = $card1;
-        $cardsArray[] = $card2;
-        $cardsArray[] = $card3;
+        $ridesArray = [];
+        $ridesArray[] = $ride1;
+        $ridesArray[] = $ride2;
+        $ridesArray[] = $ride3;
 
-        return $cardsArray;
+        return $ridesArray;
     }
     
     /*
     public function getInitialJson(): string
     {
-        $cardsArray = $this->getCardsArray();
+        $ridesArray = $this->getRidesArray();
         
         $input = [
-            "cards" => [
-                $cardsArray[0]->toArray(),
-                $cardsArray[1]->toArray(),
-                $cardsArray[2]->toArray()
+            "rides" => [
+                $ridesArray[0]->toArray(),
+                $ridesArray[1]->toArray(),
+                $ridesArray[2]->toArray()
             ]
         ];
 

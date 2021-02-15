@@ -39,19 +39,19 @@ class TripRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
-    public function findAllHavingAtLeastGivenNumberOfCards(int $nbCards): array
+    public function findAllHavingAtLeastGivenNumberOfRides(int $nbRides): array
     {
         $conn = $this->getEntityManager()->getConnection();
 
         $sql = '
             SELECT t.id, COUNT(c.id) as count FROM trip t 
-            LEFT JOIN card as c ON c.trip_id = t.id
+            LEFT JOIN ride as r ON r.trip_id = t.id
             GROUP BY t.id
             HAVING count >= :nb
             ORDER BY count DESC
             ';
         $stmt = $conn->prepare($sql);
-        $stmt->execute(['nb' => $nbCards]);
+        $stmt->execute(['nb' => $nbRides]);
 
         return $stmt->fetchAllAssociative();
     }

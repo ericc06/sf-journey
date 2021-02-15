@@ -2,63 +2,113 @@
 
 namespace App\Service;
 
-use App\Entity\Card;
+use App\Entity\Ride;
 use App\Entity\Journey;
 use App\Entity\Trip;
+use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer;
+use Symfony\Component\Serializer\Mapping\ClassDiscriminatorFromClassMetadata;
+use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
+use Symfony\Component\Serializer\Mapping\Loader\AnnotationLoader;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\PropertyAccess\PropertyAccess;
 
 class JourneyManager
 {
     private $serializer;
-    private $cardsArray;
+    private $ridesArray;
     private $em;
 
-    public function __construct(SerializerInterface $serializer, EntityManagerInterface  $em)
+    public function __construct(EntityManagerInterface  $em)
     {
-        $this->serializer = $serializer;
-        $this->cardsArray = [];
+        $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
+
+        $discriminator = new ClassDiscriminatorFromClassMetadata($classMetadataFactory);
+
+        $this->serializer = new Serializer(
+            [
+                new DateTimeNormalizer(),
+                new ObjectNormalizer($classMetadataFactory, null, null, null, $discriminator),
+                new GetSetMethodNormalizer()
+            ],
+            ['json' => new JsonEncoder()]
+        );
+        $this->ridesArray = [];
         $this->em = $em;
     }
 
-    // The JSON given as parameter must be treated like an object of type Trip, not Journey
-    // because this is the Trip entity which holds the Cards collection contained in the JSON object.
-    public function getCardsArrayFromJson($jsonContent): array
+    public function getSerializedRide($ride): string
     {
-        $cardsArray = [];
+        $serialized = $this->serializer->serialize($ride, 'json');
 
-        $givenCardsObject = $this->serializer->deserialize(
-            $jsonContent,
-            Trip::class,
-            'json'
-        );
-
-        $givenCards = $givenCardsObject->getCards();
-
-        foreach ($givenCards as $card) {
-            $cardsArray[] = $card;
-        }
-
-        return $cardsArray;
+        return $serialized;
     }
 
-    public function getBuiltJourney(array $cardsArray): Journey
+    // The JSON given as parameter must be treated like an object of type Trip, not Journey
+    // because this is the Trip entity which holds the Rides collection contained in the JSON object.
+    public function getRidesArrayFromJson($jsonContent): array
     {
-        $this->cardsArray = $cardsArray;
+        $ridesArray = [];
+        $decodedJson = json_decode($jsonContent);
+
+        foreach ($decodedJson as $obj) {
+            $ride = $this->getRideInstance($obj);
+
+            $ridesArray[] = $ride;
+        }
+
+        return $ridesArray;
+    }
+
+    public function getRideInstance($obj): Ride
+    {
+        $type = ucfirst($obj->meansType);
+
+        $rideClassName = 'App\\Entity\\' . $type . 'Ride';
+
+        $ride = new $rideClassName();
+
+        $objReflection = new \ReflectionObject($obj);
+        $objProperties = $objReflection->getProperties();
+
+
+        $propertyAccessor = PropertyAccess::createPropertyAccessor();
+
+        foreach ($objProperties as $objProperty) {
+            $propertyName = $objProperty->getName();
+
+            // Is the current value a date?
+            $value = ($date = strtotime($obj->$propertyName))
+                ? \DateTime::createFromFormat('U', $date)
+                : $obj->$propertyName;
+
+            $propertyAccessor->setValue($ride, $propertyName, $value);
+        }
+
+        return $ride;
+    }
+
+    public function getBuiltJourney(array $ridesArray): Journey
+    {
+        $this->ridesArray = $ridesArray;
 
         $tmpJourney = new Journey();
 
-        while (count($this->cardsArray) > 0) {
+        while (count($this->ridesArray) > 0) {
             $trip = new Trip();
 
-            $startCard = $this->addStartCardToTrip($trip);
+            $startRide = $this->addStartRideToTrip($trip);
 
             // The starting date of the trips will be used to sort them
             // chronologocally if there are many.
-            $trip->setTripStartDate($startCard->getStartDate());
+            $trip->setTripStartDate($startRide->getStartDate());
 
-            $this->addNextCardsToTrip($trip, $startCard);
+            $this->addNextRidesToTrip($trip, $startRide);
 
             $tmpJourney->addTrip($trip);
         }
@@ -81,17 +131,99 @@ class JourneyManager
         return $tmpJourney;
     }
 
+    public function addStartRideToTrip(&$trip): Ride
+    {
+        $rides = $this->ridesArray;
+        $startRide = null;
+
+        foreach ($rides as $ride) {
+            $startLoc = $ride->getStartLocation();
+            $startDate = $ride->getStartDate();
+            // Boolean used to know the exit condition of the following 'foreach' loop.
+            $isStartRide = true;
+            // Looking for a ride with an end location equal to the current ride starting location
+            // AND with an end date older that the current ride start date.
+            // If we find one, the current ride is not the starting cart, so we break the loop
+            // and move to the next cart.
+            foreach ($rides as $endRide) {
+                if (
+                    $ride !== $endRide
+                    && $startLoc === $endRide->getEndLocation()
+                    && $startDate > $endRide->getEndDate()
+                ) {
+                    $isStartRide = false;
+                    break;
+                }
+            }
+
+            // We found the (or one of the) starting ride. We break the main loop.
+            if ($isStartRide) {
+                $startRide = $ride;
+                break;
+            }
+        }
+
+        $trip->addRide($startRide);
+        $this->unsetValue($this->ridesArray, $startRide);
+
+        return $startRide;
+    }
+
+    public function unsetValue(&$array, $value, $strict = true)
+    {
+        if (($key = array_search($value, $array, $strict)) !== false) {
+            unset($array[$key]);
+        }
+    }
+
+    public function addNextRidesToTrip(&$trip, $ride): void
+    {
+        if ($nextRide = $this->getNextRide($ride)) {
+            $trip->addRide($nextRide);
+
+            $this->unsetValue($this->ridesArray, $nextRide);
+            $this->addNextRidesToTrip($trip, $nextRide);
+        }
+    }
+
+    // Provided a ride (the startRide), looking for the next ride of the trip, with:
+    // - start location of the next ride = end location of the startCart
+    // - start date of the next ride > end date of the startCart
+    // If there are many, we choose the first one (chronologically).
+    public function getNextRide($startRide): ?Ride
+    {
+        $rides = $this->ridesArray;
+        $endLoc = $startRide->getEndLocation();
+        $endDate = $startRide->getEndDate();
+
+        $nextRide = null;
+
+        foreach ($rides as $endRide) {
+            if (
+                $startRide !== $endRide
+                && $endLoc === $endRide->getStartLocation()
+                && $endDate < $endRide->getStartDate()
+            ) {
+                if (!$nextRide) {
+                    $nextRide = $endRide;
+                } else {
+                    if ($endRide->getStartDate() < $nextRide->getStartDate()) {
+                        $nextRide = $endRide;
+                    }
+                }
+                break;
+            }
+        }
+
+        return $nextRide;
+    }
+
     public function getSerializedJourney($journey): string
     {
         $jsonContent = $this->serializer->serialize(
             $journey,
             'json',
-            [
-                'groups' => ['card', 'trip', 'journey'],
-                'circular_reference_handler' => function ($object) {
-                    return $object->getId();
-                },
-            ]
+            [ 'groups' => ['ride', 'trip', 'journey'] ]
         );
 
         return $jsonContent;
@@ -102,121 +234,39 @@ class JourneyManager
         $trips = $journey->getTrips();
         $nbTrips = $trips->count();
 
-        $text = 'Your journey counts '.$nbTrips.' trip'.($nbTrips > 1 ? 's.' : '.')."\n\n\n";
+        $text = 'Your journey counts ' . $nbTrips . ' trip' . ($nbTrips > 1 ? 's.' : '.') . "\n\n\n";
 
         foreach ($trips->getIterator() as $i => $trip) {
-            $cards = $trip->getCards();
-            $nbCards = $cards->count();
+            $rides = $trip->getRides();
+            $nbRides = $rides->count();
 
-            $text .= 'Trip n°'.(int) ($i + 1).' counts ';
-            $text .= $nbCards.' travel'.($nbCards > 1 ? 's:' : ':')."\n\n";
+            $text .= 'Trip n°' . (int) ($i + 1) . ' counts ';
+            $text .= $nbRides . ' travel' . ($nbRides > 1 ? 's:' : ':') . "\n\n";
 
-            foreach ($cards->getIterator() as $j => $card) {
+            foreach ($rides->getIterator() as $j => $ride) {
                 //$text .= "Description of travel n°" . (int)($j + 1) . ":\n";
-
-                $text .= '- On '.date_format($card->getStartDate(), 'Y-m-d H:i:s');
-                $text .= ' take '.$card->getMeansType();
-                $text .= $card->getMeansNumber() ? ' '.$card->getMeansNumber() : '';
-                $text .= ' from '.$card->getStartLocation();
-                $text .= $card->getMeansStartPoint() ? ' ('.$card->getMeansStartPoint().')' : '';
-                $text .= ' to '.$card->getEndLocation();
-                $text .= $card->getMeansEndPoint() ? ' (exact location: '.$card->getMeansEndPoint().').' : '.';
-                $text .= $card->getSeatNumber() ? ' Sit in '.$card->getSeatNumber().'.' : ' No seat assignment.';
-                $text .= ' Arrival planned on '.date_format($card->getEndDate(), 'Y-m-d H:i:s');
-                $text .= $card->getMeansEndPoint() ? ' at '.$card->getMeansEndPoint().'.' : '.';
-                $text .= $card->getBaggageInfo() ? ' '.$card->getBaggageInfo().".\n\n" : "\n\n";
+                $text .= '- On ' . date_format($ride->getStartDate(), 'Y-m-d H:i:s');
+                $text .= ' take ' . $ride->getMeansType();
+                $text .= $ride->getMeansNumber() ? ' ' . $ride->getMeansNumber() : '';
+                $text .= ' from ' . $ride->getStartLocation();
+                $text .= $ride->getMeansStartPoint() ? ' (' . $ride->getMeansStartPoint() . ')' : '';
+                $text .= ' to ' . $ride->getEndLocation();
+                $text .= $ride->getMeansEndPoint() ? ' (' . $ride->getMeansEndPoint() . ').' : '.';
+                if(method_exists($ride, 'getSeatNumber')) {
+                    $text .= $ride->getSeatNumber() ? ' Sit in ' . $ride->getSeatNumber() . '.' : ' No seat assignment.';
+                }
+                $text .= ' Arrival planned on ' . date_format($ride->getEndDate(), 'Y-m-d H:i:s');
+                $text .= $ride->getMeansEndPoint() ? ' at ' . $ride->getMeansEndPoint() . '.' : '.';
+                if(method_exists($ride, 'getBaggageInfo')) {
+                    $text .= $ride->getBaggageInfo() ? ' ' . $ride->getBaggageInfo() : "";
+                }
+                $text .= "\n\n";
             }
 
             $text .= "You have arrived at your final destination.\n\n\n";
         }
 
         return $text;
-    }
-
-    public function addStartCardToTrip(&$trip): Card
-    {
-        $cards = $this->cardsArray;
-        $startCard = null;
-
-        foreach ($cards as $card) {
-            $startLoc = $card->getStartLocation();
-            $startDate = $card->getStartDate();
-            // Boolean used to know the exit condition of the following 'foreach' loop.
-            $isStartCard = true;
-            // Looking for a card with an end location equal to the current card starting location
-            // AND with an end date older that the current card start date.
-            // If we find one, the current card is not the starting cart, so we break the loop
-            // and move to the next cart.
-            foreach ($cards as $endCard) {
-                if (
-                    $card !== $endCard
-                    && $startLoc === $endCard->getEndLocation()
-                    && $startDate > $endCard->getEndDate()
-                ) {
-                    $isStartCard = false;
-                    break;
-                }
-            }
-
-            // We found the (or one of the) starting card. We break the main loop.
-            if ($isStartCard) {
-                $startCard = $card;
-                break;
-            }
-        }
-
-        $trip->addCard($startCard);
-        $this->unsetValue($this->cardsArray, $startCard);
-
-        return $startCard;
-    }
-
-    public function unsetValue(&$array, $value, $strict = true)
-    {
-        if (($key = array_search($value, $array, $strict)) !== false) {
-            unset($array[$key]);
-        }
-    }
-
-    public function addNextCardsToTrip(&$trip, $card): void
-    {
-        if ($nextCard = $this->getNextCard($card)) {
-            $trip->addCard($nextCard);
-            $this->unsetValue($this->cardsArray, $nextCard);
-            $this->addNextCardsToTrip($trip, $nextCard);
-        }
-    }
-
-    // Provided a card (the startCard), looking for the next card of the trip, with:
-    // - start location of the next card = end location of the startCart
-    // - start date of the next card > end date of the startCart
-    // If there are many, we choose the first one (chronologically).
-    public function getNextCard($startCard): ?Card
-    {
-        $cards = $this->cardsArray;
-        $endLoc = $startCard->getEndLocation();
-        $endDate = $startCard->getEndDate();
-
-        $nextCard = null;
-
-        foreach ($cards as $endCard) {
-            if (
-                $startCard !== $endCard
-                && $endLoc === $endCard->getStartLocation()
-                && $endDate < $endCard->getStartDate()
-            ) {
-                if (!$nextCard) {
-                    $nextCard = $endCard;
-                } else {
-                    if ($endCard->getStartDate() < $nextCard->getStartDate()) {
-                        $nextCard = $endCard;
-                    }
-                }
-                break;
-            }
-        }
-
-        return $nextCard;
     }
 
     public function persistJourney(Journey $journey): Journey
@@ -228,8 +278,8 @@ class JourneyManager
     }
 
     // Useful to unit test some of the above methods
-    public function setThisCardsArray(array $cardsArray): void
+    public function setThisRidesArray(array $ridesArray): void
     {
-        $this->cardsArray = $cardsArray;
+        $this->ridesArray = $ridesArray;
     }
 }
