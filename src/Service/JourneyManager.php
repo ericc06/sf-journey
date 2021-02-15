@@ -17,6 +17,7 @@ use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
+
 class JourneyManager
 {
     private $serializer;
@@ -251,10 +252,12 @@ class JourneyManager
                 if (method_exists($ride, 'getSeatNumber')) {
                     $text .= $ride->getSeatNumber() ? ' Sit in '.$ride->getSeatNumber().'.' : ' No seat assignment.';
                 }
-                $text .= ' Arrival planned on '.date_format($ride->getEndDate(), 'Y-m-d H:i:s');
-                $text .= $ride->getMeansEndPoint() ? ' at '.$ride->getMeansEndPoint().'.' : '.';
+                if (null !== $ride->getEndDate()) {
+                    $text .= ' Arrival planned on '.date_format($ride->getEndDate(), 'Y-m-d H:i:s');
+                    $text .= $ride->getMeansEndPoint() ? ' at '.$ride->getMeansEndPoint().'.' : '.';
+                }
                 if (method_exists($ride, 'getBaggageInfo')) {
-                    $text .= $ride->getBaggageInfo() ? ' '.$ride->getBaggageInfo() : '';
+                    $text .= $ride->getBaggageInfo() ? ' '.$ride->getBaggageInfo().'.' : '';
                 }
                 $text .= "\n\n";
             }
