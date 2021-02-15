@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use App\Entity\Ride;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -48,7 +47,7 @@ class FlightRide extends Ride
 
         return $this;
     }
-    
+
     public function getBaggageInfo(): ?string
     {
         return $this->baggageInfo;

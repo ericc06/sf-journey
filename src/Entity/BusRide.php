@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use App\Entity\Ride;
 use Doctrine\ORM\Mapping as ORM;
 
 /**

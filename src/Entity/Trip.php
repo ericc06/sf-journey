@@ -38,7 +38,6 @@ class Trip
      */
     private $journey;
 
-
     public function __construct()
     {
         $this->rides = new ArrayCollection();

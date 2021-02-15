@@ -3,8 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\Journey;
-use App\Entity\Trip;
-use App\Entity\Ride;
 use App\Service\JourneyManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;

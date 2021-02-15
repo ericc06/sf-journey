@@ -2,29 +2,28 @@
 
 namespace App\Service;
 
-use App\Entity\Ride;
 use App\Entity\Journey;
+use App\Entity\Ride;
 use App\Entity\Trip;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Serializer;
-use Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer;
 use Symfony\Component\Serializer\Mapping\ClassDiscriminatorFromClassMetadata;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\AnnotationLoader;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
+use Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
-use Symfony\Component\PropertyAccess\PropertyAccess;
-
+use Symfony\Component\Serializer\Serializer;
 class JourneyManager
 {
     private $serializer;
     private $ridesArray;
     private $em;
 
-    public function __construct(EntityManagerInterface  $em)
+    public function __construct(EntityManagerInterface $em)
     {
         $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
 
@@ -34,7 +33,7 @@ class JourneyManager
             [
                 new DateTimeNormalizer(),
                 new ObjectNormalizer($classMetadataFactory, null, null, null, $discriminator),
-                new GetSetMethodNormalizer()
+                new GetSetMethodNormalizer(),
             ],
             ['json' => new JsonEncoder()]
         );
@@ -49,8 +48,6 @@ class JourneyManager
         return $serialized;
     }
 
-    // The JSON given as parameter must be treated like an object of type Trip, not Journey
-    // because this is the Trip entity which holds the Rides collection contained in the JSON object.
     public function getRidesArrayFromJson($jsonContent): array
     {
         $ridesArray = [];
@@ -69,18 +66,17 @@ class JourneyManager
     {
         $type = ucfirst($obj->meansType);
 
-        $rideClassName = 'App\\Entity\\' . $type . 'Ride';
+        $rideClassName = 'App\\Entity\\'.$type.'Ride';
 
         $ride = new $rideClassName();
 
         $objReflection = new \ReflectionObject($obj);
         $objProperties = $objReflection->getProperties();
 
-
         $propertyAccessor = PropertyAccess::createPropertyAccessor();
 
-        foreach ($objProperties as $objProperty) {
-            $propertyName = $objProperty->getName();
+        foreach ($objProperties as $property) {
+            $propertyName = $property->getName();
 
             // Is the current value a date?
             $value = ($date = strtotime($obj->$propertyName))
@@ -169,7 +165,7 @@ class JourneyManager
         return $startRide;
     }
 
-    public function unsetValue(&$array, $value, $strict = true)
+    public function unsetValue(&$array, $value, $strict = true): void
     {
         if (($key = array_search($value, $array, $strict)) !== false) {
             unset($array[$key]);
@@ -223,7 +219,7 @@ class JourneyManager
         $jsonContent = $this->serializer->serialize(
             $journey,
             'json',
-            [ 'groups' => ['ride', 'trip', 'journey'] ]
+            ['groups' => ['ride', 'trip', 'journey']]
         );
 
         return $jsonContent;
@@ -234,31 +230,31 @@ class JourneyManager
         $trips = $journey->getTrips();
         $nbTrips = $trips->count();
 
-        $text = 'Your journey counts ' . $nbTrips . ' trip' . ($nbTrips > 1 ? 's.' : '.') . "\n\n\n";
+        $text = 'Your journey counts '.$nbTrips.' trip'.($nbTrips > 1 ? 's.' : '.')."\n\n\n";
 
         foreach ($trips->getIterator() as $i => $trip) {
             $rides = $trip->getRides();
             $nbRides = $rides->count();
 
-            $text .= 'Trip n°' . (int) ($i + 1) . ' counts ';
-            $text .= $nbRides . ' travel' . ($nbRides > 1 ? 's:' : ':') . "\n\n";
+            $text .= 'Trip n°'.(int) ($i + 1).' counts ';
+            $text .= $nbRides.' travel'.($nbRides > 1 ? 's:' : ':')."\n\n";
 
             foreach ($rides->getIterator() as $j => $ride) {
                 //$text .= "Description of travel n°" . (int)($j + 1) . ":\n";
-                $text .= '- On ' . date_format($ride->getStartDate(), 'Y-m-d H:i:s');
-                $text .= ' take ' . $ride->getMeansType();
-                $text .= $ride->getMeansNumber() ? ' ' . $ride->getMeansNumber() : '';
-                $text .= ' from ' . $ride->getStartLocation();
-                $text .= $ride->getMeansStartPoint() ? ' (' . $ride->getMeansStartPoint() . ')' : '';
-                $text .= ' to ' . $ride->getEndLocation();
-                $text .= $ride->getMeansEndPoint() ? ' (' . $ride->getMeansEndPoint() . ').' : '.';
-                if(method_exists($ride, 'getSeatNumber')) {
-                    $text .= $ride->getSeatNumber() ? ' Sit in ' . $ride->getSeatNumber() . '.' : ' No seat assignment.';
+                $text .= '- On '.date_format($ride->getStartDate(), 'Y-m-d H:i:s');
+                $text .= ' take '.$ride->getMeansType();
+                $text .= $ride->getMeansNumber() ? ' '.$ride->getMeansNumber() : '';
+                $text .= ' from '.$ride->getStartLocation();
+                $text .= $ride->getMeansStartPoint() ? ' ('.$ride->getMeansStartPoint().')' : '';
+                $text .= ' to '.$ride->getEndLocation();
+                $text .= $ride->getMeansEndPoint() ? ' ('.$ride->getMeansEndPoint().').' : '.';
+                if (method_exists($ride, 'getSeatNumber')) {
+                    $text .= $ride->getSeatNumber() ? ' Sit in '.$ride->getSeatNumber().'.' : ' No seat assignment.';
                 }
-                $text .= ' Arrival planned on ' . date_format($ride->getEndDate(), 'Y-m-d H:i:s');
-                $text .= $ride->getMeansEndPoint() ? ' at ' . $ride->getMeansEndPoint() . '.' : '.';
-                if(method_exists($ride, 'getBaggageInfo')) {
-                    $text .= $ride->getBaggageInfo() ? ' ' . $ride->getBaggageInfo() : "";
+                $text .= ' Arrival planned on '.date_format($ride->getEndDate(), 'Y-m-d H:i:s');
+                $text .= $ride->getMeansEndPoint() ? ' at '.$ride->getMeansEndPoint().'.' : '.';
+                if (method_exists($ride, 'getBaggageInfo')) {
+                    $text .= $ride->getBaggageInfo() ? ' '.$ride->getBaggageInfo() : '';
                 }
                 $text .= "\n\n";
             }

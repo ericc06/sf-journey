@@ -5,7 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-/** 
+/**
  * @ORM\MappedSuperclass
  * @ORM\DiscriminatorColumn(name="meansType", type="string")
  * @ORM\DiscriminatorMap({
@@ -60,7 +60,7 @@ abstract class Ride
     protected $meansStartPoint;
 
     /**
-     * @ORM\Column(type="string", length=50, nullable=true)
+     * @ORM\Column(type="string", length=255, nullable=true)
      * @Groups({"ride"})
      */
     protected $meansEndPoint;
@@ -172,7 +172,7 @@ abstract class Ride
 
         return $this;
     }
-    
+
     public function toArray(): array
     {
         $arrayRide = [
