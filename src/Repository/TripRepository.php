@@ -42,16 +42,40 @@ class TripRepository extends ServiceEntityRepository
     public function findAllHavingAtLeastGivenNumberOfRides(int $nbRides): array
     {
         $conn = $this->getEntityManager()->getConnection();
+        $sm = $conn->getSchemaManager();
+
+        $tableNames = $sm->listTableNames();
+
+        if (!sizeof($tableNames)) {
+            return [];
+        }
+
+        $sqlPart = '';
+
+        foreach ($tableNames as $name) {
+            if ('_ride' === substr($name, -5)) {
+                if (!strlen($sqlPart)) {
+                    $sqlPart = 'SELECT trip_id FROM '.$name;
+                } else {
+                    $sqlPart .= ' UNION ALL SELECT trip_id FROM '.$name;
+                }
+            }
+        }
+
+        if (!strlen($sqlPart)) {
+            return [];
+        }
 
         $sql = '
-            SELECT t.id, COUNT(c.id) as count FROM trip t 
-            LEFT JOIN ride as r ON r.trip_id = t.id
-            GROUP BY t.id
-            HAVING count >= :nb
-            ORDER BY count DESC
+            SELECT trip_id, COUNT(trip_id) as cnt FROM
+            ('.$sqlPart.') as rides
+            GROUP BY trip_id
+            HAVING cnt > :number
+            ORDER BY cnt DESC
             ';
+
         $stmt = $conn->prepare($sql);
-        $stmt->execute(['nb' => $nbRides]);
+        $stmt->execute(['number' => $nbRides]);
 
         return $stmt->fetchAllAssociative();
     }

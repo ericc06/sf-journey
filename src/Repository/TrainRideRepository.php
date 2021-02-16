@@ -45,7 +45,7 @@ class TrainRideRepository extends ServiceEntityRepository
         $conn = $this->getEntityManager()->getConnection();
 
         $sql = '
-            SELECT * FROM train_ride t
+            SELECT *, TIMESTAMPDIFF(MINUTE, t.start_date, t.end_date) / 60 as duration FROM train_ride t
             WHERE TIMESTAMPDIFF(MINUTE, t.start_date, t.end_date) > :minutes
             ';
 

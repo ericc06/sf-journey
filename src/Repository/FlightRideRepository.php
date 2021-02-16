@@ -45,7 +45,7 @@ class FlightRideRepository extends ServiceEntityRepository
         $conn = $this->getEntityManager()->getConnection();
 
         $sql = '
-            SELECT * FROM flight_ride f
+            SELECT *, TIMESTAMPDIFF(MINUTE, f.start_date, f.end_date) / 60 as duration FROM flight_ride f
             WHERE TIMESTAMPDIFF(MINUTE, f.start_date, f.end_date) > :minutes
             ';
 
