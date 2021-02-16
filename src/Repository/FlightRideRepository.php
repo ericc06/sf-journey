@@ -51,7 +51,7 @@ class FlightRideRepository extends ServiceEntityRepository
 
         if (!$includeExpiredCards) {
             $sql .= 'AND f.start_date > CURRENT_TIME()';
-        }            
+        }
 
         $sql .= 'ORDER BY f.start_date ASC';
 

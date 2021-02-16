@@ -51,7 +51,7 @@ class TrainRideRepository extends ServiceEntityRepository
 
         if (!$includeExpiredCards) {
             $sql .= 'AND t.start_date > CURRENT_TIME()';
-        }            
+        }
 
         $sql .= 'ORDER BY t.start_date ASC';
 

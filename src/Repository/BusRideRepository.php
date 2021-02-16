@@ -51,7 +51,7 @@ class BusRideRepository extends ServiceEntityRepository
 
         if (!$includeExpiredCards) {
             $sql .= 'AND b.start_date > CURRENT_TIME()';
-        }            
+        }
 
         $sql .= 'ORDER BY b.start_date ASC';
 
