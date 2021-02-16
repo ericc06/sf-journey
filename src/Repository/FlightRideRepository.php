@@ -19,32 +19,45 @@ class FlightRideRepository extends ServiceEntityRepository
         parent::__construct($registry, FlightRide::class);
     }
 
-    // /**
-    //  * @return FlightRide[] Returns an array of FlightRide objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    public function findByStartDateAfterGivenDate($date)
     {
-        return $this->createQueryBuilder('t')
-            ->andWhere('t.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('t.id', 'ASC')
-            ->setMaxResults(10)
+        return $this->createQueryBuilder('f')
+            ->andWhere('f.startDate > :date')
+            ->setParameter('date', $date)
+            ->orderBy('f.startDate', 'ASC')
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
     }
-    */
 
-    /*
-    public function findOneBySomeField($value): ?FlightRide
+    public function findImmediateNextRideStartingAfterNow()
     {
-        return $this->createQueryBuilder('t')
-            ->andWhere('t.exampleField = :val')
-            ->setParameter('val', $value)
+        return $this->createQueryBuilder('f')
+            ->andWhere('f.startDate > :now')
+            ->setParameter('now', new \DateTime())
+            ->orderBy('f.startDate', 'ASC')
+            ->setMaxResults(1)
             ->getQuery()
-            ->getOneOrNullResult()
-        ;
+            ->getOneOrNullResult();
     }
-    */
+
+    public function findAllLongerThanGivenHours(int $hours, bool $includeExpiredCards = true): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = '
+            SELECT * FROM flight_ride f
+            WHERE TIMESTAMPDIFF(MINUTE, f.start_date, f.end_date) > :minutes
+            ';
+
+        if (!$includeExpiredCards) {
+            $sql .= 'AND f.start_date > CURRENT_TIME()';
+        }            
+
+        $sql .= 'ORDER BY f.start_date ASC';
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute(['minutes' => $hours * 60]);
+
+        return $stmt->fetchAllAssociative();
+    }
 }

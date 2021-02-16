@@ -19,32 +19,45 @@ class TrainRideRepository extends ServiceEntityRepository
         parent::__construct($registry, TrainRide::class);
     }
 
-    // /**
-    //  * @return TrainRide[] Returns an array of TrainRide objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    public function findByStartDateAfterGivenDate($date)
     {
         return $this->createQueryBuilder('t')
-            ->andWhere('t.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('t.id', 'ASC')
-            ->setMaxResults(10)
+            ->andWhere('t.startDate > :date')
+            ->setParameter('date', $date)
+            ->orderBy('t.startDate', 'ASC')
             ->getQuery()
-            ->getResult()
-        ;
+            ->getResult();
     }
-    */
 
-    /*
-    public function findOneBySomeField($value): ?TrainRide
+    public function findImmediateNextRideStartingAfterNow()
     {
         return $this->createQueryBuilder('t')
-            ->andWhere('t.exampleField = :val')
-            ->setParameter('val', $value)
+            ->andWhere('t.startDate > :now')
+            ->setParameter('now', new \DateTime())
+            ->orderBy('t.startDate', 'ASC')
+            ->setMaxResults(1)
             ->getQuery()
-            ->getOneOrNullResult()
-        ;
+            ->getOneOrNullResult();
     }
-    */
+
+    public function findAllLongerThanGivenHours(int $hours, bool $includeExpiredCards = true): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = '
+            SELECT * FROM train_ride t
+            WHERE TIMESTAMPDIFF(MINUTE, t.start_date, t.end_date) > :minutes
+            ';
+
+        if (!$includeExpiredCards) {
+            $sql .= 'AND t.start_date > CURRENT_TIME()';
+        }            
+
+        $sql .= 'ORDER BY t.start_date ASC';
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute(['minutes' => $hours * 60]);
+
+        return $stmt->fetchAllAssociative();
+    }
 }
