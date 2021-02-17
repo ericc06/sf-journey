@@ -46,7 +46,7 @@ class FlightRideRepository extends ServiceEntityRepository
 
         $sql = '
             SELECT *, TIMESTAMPDIFF(MINUTE, f.start_date, f.end_date) / 60 as duration FROM flight_ride f
-            WHERE TIMESTAMPDIFF(MINUTE, f.start_date, f.end_date) > :minutes
+            HAVING duration > :nbHours
             ';
 
         if (!$includeExpiredCards) {
@@ -56,7 +56,7 @@ class FlightRideRepository extends ServiceEntityRepository
         $sql .= 'ORDER BY f.start_date ASC';
 
         $stmt = $conn->prepare($sql);
-        $stmt->execute(['minutes' => $hours * 60]);
+        $stmt->execute(['nbHours' => $hours]);
 
         return $stmt->fetchAllAssociative();
     }

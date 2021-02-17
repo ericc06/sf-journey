@@ -46,7 +46,7 @@ class TrainRideRepository extends ServiceEntityRepository
 
         $sql = '
             SELECT *, TIMESTAMPDIFF(MINUTE, t.start_date, t.end_date) / 60 as duration FROM train_ride t
-            WHERE TIMESTAMPDIFF(MINUTE, t.start_date, t.end_date) > :minutes
+            HAVING duration > :nbHours
             ';
 
         if (!$includeExpiredCards) {
@@ -56,7 +56,7 @@ class TrainRideRepository extends ServiceEntityRepository
         $sql .= 'ORDER BY t.start_date ASC';
 
         $stmt = $conn->prepare($sql);
-        $stmt->execute(['minutes' => $hours * 60]);
+        $stmt->execute(['nbHours' => $hours]);
 
         return $stmt->fetchAllAssociative();
     }

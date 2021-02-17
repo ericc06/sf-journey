@@ -2,10 +2,10 @@
 
 namespace App\DataFixtures;
 
-use Doctrine\Bundle\FixturesBundle\Fixture;
-use Doctrine\Persistence\ObjectManager;
 use App\Entity\Journey;
 use App\Entity\Trip;
+use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Persistence\ObjectManager;
 
 class JourneyFixtures extends Fixture
 {
@@ -29,7 +29,7 @@ class JourneyFixtures extends Fixture
                 'seatNumber' => 'G6',
                 'meansType' => 'flight',
                 'meansNumber' => 'AF123',
-                'baggageInfo' => 'Baggage drop at ticket counter 344'
+                'baggageInfo' => 'Baggage drop at ticket counter 344',
             ],
             [
                 'startLocation' => 'Paris',
@@ -56,7 +56,7 @@ class JourneyFixtures extends Fixture
                 'seatNumber' => 'G6',
                 'meansType' => 'flight',
                 'meansNumber' => 'AF123',
-                'baggageInfo' => 'Baggage drop at ticket counter 344'
+                'baggageInfo' => 'Baggage drop at ticket counter 344',
             ],
             [
                 'startLocation' => 'Paris',
@@ -83,7 +83,7 @@ class JourneyFixtures extends Fixture
                 'seatNumber' => 'G6',
                 'meansType' => 'flight',
                 'meansNumber' => 'AF123',
-                'baggageInfo' => 'Baggage drop at ticket counter 344'
+                'baggageInfo' => 'Baggage drop at ticket counter 344',
             ],
             [
                 'startLocation' => 'Paris',
@@ -99,10 +99,10 @@ class JourneyFixtures extends Fixture
 
         foreach ($rides as $ride) {
             $rideType = $ride['meansType'];
-            $rideClass = 'App\\Entity\\' . ucfirst($rideType) . 'Ride';
+            $rideClass = 'App\\Entity\\'.ucfirst($rideType).'Ride';
             $rideObj = new $rideClass();
             foreach ($ride as $key => $value) {
-                $methodName = 'set' . ucfirst($key);
+                $methodName = 'set'.ucfirst($key);
                 $rideObj->$methodName($value);
             }
             $trip->addRide($rideObj);
