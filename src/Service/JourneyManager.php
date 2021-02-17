@@ -42,13 +42,6 @@ class JourneyManager
         $this->em = $em;
     }
 
-    public function getSerializedRide($ride): string
-    {
-        $serialized = $this->serializer->serialize($ride, 'json');
-
-        return $serialized;
-    }
-
     public function getRidesArrayFromJson($jsonContent): array
     {
         $ridesArray = [];

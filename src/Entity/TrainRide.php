@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\TrainRideRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=TrainRideRepository::class)
@@ -12,11 +13,13 @@ class TrainRide extends Ride
 {
     /**
      * @ORM\Column(type="string", length=20, nullable=true)
+     * @Groups({"ride"})
      */
     private $seatNumber;
 
     /**
      * @ORM\Column(type="string", length=20, nullable=true)
+     * @Groups({"ride"})
      */
     private $meansNumber;
 

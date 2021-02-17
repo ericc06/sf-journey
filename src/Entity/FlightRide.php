@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\FlightRideRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=FlightRideRepository::class)
@@ -12,16 +13,19 @@ class FlightRide extends Ride
 {
     /**
      * @ORM\Column(type="string", length=20, nullable=true)
+     * @Groups({"ride"})
      */
     private $seatNumber;
 
     /**
      * @ORM\Column(type="string", length=20, nullable=true)
+     * @Groups({"ride"})
      */
     private $meansNumber;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups({"ride"})
      */
     private $baggageInfo;
 

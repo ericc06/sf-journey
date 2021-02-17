@@ -18,3 +18,4 @@
 /tools/
 .php_cs.cache
 .env
+.env.test
